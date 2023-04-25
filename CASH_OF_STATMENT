@@ -1,0 +1,1337 @@
+USE [SunSystemsDB]
+GO
+/****** Object:  StoredProcedure [dbo].[CASH_OF_STATEMENT_VER_3]    Script Date: 25/04/2023 13:23:18 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+ALTER PROCEDURE [dbo].[CASH_OF_STATEMENT_VER_3]  @PERIOD2 CHAR(7)
+AS
+BEGIN
+
+DECLARE @PERIOD1 char(4)
+DECLARE @PER1 CHAR(7);
+if @PERIOD2 > 0
+begin
+ SET @PERIOD1 = LEFT(@PERIOD2,4);
+ SET @PER1 = @PERIOD1 + '001';
+  
+ end
+ 
+ 
+SELECT     TOP (100) PERCENT L1, L2, L3, ANL_CODE, NAME, AMOUNT
+FROM         (SELECT     LEFT(ANL_CODE, 5) + '.00.00' AS L1, LEFT(ANL_CODE, 7) + '0.00' AS L2, LEFT(ANL_CODE, 8) + '.00' AS L3, ANL_CODE, NAME, SUM(AMOUNT) 
+                                              AS AMOUNT
+                       FROM          (SELECT     'CF.01.11.01' AS ANL_CODE, 'Profit before tax/Loss before tax' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                      dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                      dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE      (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE LIKE 'PL.11.%')
+                                               UNION ALL
+                                               SELECT     'CF.02.11.01' AS ANL_CODE, 'Depreciation' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.12.01')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+
+
+
+
+                                               SELECT     'CF.02.11.02' AS ANL_CODE, 'Foreign exchange gain' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.02.1' AS ANL_CODE, 'Foreign exchange loss' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.50.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.05.11.11.1' AS ANL_CODE, 'Foreign exchange gain' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.05.11.11.11' AS ANL_CODE, 'Foreign exchange loss' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.50.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.02.2' AS ANL_CODE, 'Gain on disposal' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.14.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.02.2' AS ANL_CODE, 'Loss on disposal' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.15.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.07' AS ANL_CODE, 'Finance costs' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.20.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.07.1' AS ANL_CODE, 'Financial income' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.30.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.11.07.2' AS ANL_CODE, 'Profit tax' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.12.00.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.01' AS ANL_CODE, 'Trade receivables' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.02')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.02' AS ANL_CODE, 'Prepayments and deferred expenses' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.03')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+ 
+---- TOTAL OPERATION ACTIVITIES + ADJUSTMENTS
+SELECT 'CF.02.11.08' AS ANL_CODE,  ' ' AS NAME,  SUM(GT.AMOUNT) FROM
+(SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                      dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                      dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE      (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE LIKE 'PL.11.%')
+
+											   UNION ALL
+											   SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.12.01')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT 'CF.02.11.08' AS ANL_CODE,     ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                              
+                                              
+                                               UNION ALL
+                                               SELECT  'CF.02.11.08' AS ANL_CODE,   ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.20.00')
+                                               GROUP BY B.ANL_CODE, C.NAME) AS GT
+-----TOTAL END
+
+
+UNION ALL
+
+
+                                               SELECT     'CF.02.12.03' AS ANL_CODE, 'Inventories' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.04')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.04' AS ANL_CODE, 'Vat deposit' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.06')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.05' AS ANL_CODE, 'Advances paid and other assets' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     SUM(AMOUNT) AS AMOUNT
+                                                                      FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                              FROM          dbo.AZY_A_SALFLDG
+                                                                                              WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                              GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                              HAVING      (- SUM(AMOUNT) > 0)) AS A
+                                                                      UNION ALL
+                                                                      SELECT     - SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                             FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_7
+                                                                                             WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                             GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                             HAVING      (- SUM(AMOUNT) > 0)) AS A) AS ADVANCE
+                                               UNION ALL
+                                               SELECT     'CF.02.12.07' AS ANL_CODE, 'Prepaid taxes' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.06')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                               FROM         (SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM          (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                              FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                      FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_6
+                                                                                                                      WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                                                      GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                      HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                             FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                     FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_5
+                                                                                                                     WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                                                     GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                     HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.02.12.06' AS ANL_CODE, 'Receivables from shareholders' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'XX.XX.XX.XX')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.08' AS ANL_CODE, 'Trade payables' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.07')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                               FROM         (SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.08')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.08')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.02.21.01' AS ANL_CODE, 'Financial costs paid' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'PL.11.20.00') AND (A.D_C = 'D') AND 
+                                                                     (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                               UNION ALL
+                                               SELECT     'CF.02.21.12' AS ANL_CODE, 'Taxes paid' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.09')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.02.21.12' AS ANL_CODE, 'Taxes paid' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.12.00.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT     'CF.03.11.11' AS ANL_CODE, 'Proceeds of disposal of Property,Plant and equipments' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (A.ACCNT_CODE = '611.047.01.01.1') AND (A.D_C = 'C') 
+                                                                     AND (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                               UNION ALL
+                                               SELECT     'CF.03.11.12' AS ANL_CODE, 'Proceeds of disposal of Intangible assets' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE = '611.047.02.01.1') AND (A.D_C = 'C') AND 
+                                                                     (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                               UNION ALL
+                                               SELECT     'CF.03.11.13' AS ANL_CODE, 'Purchase of property, plant and equipment' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND (A.ACCNT_CODE <= '113.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '531.000.00.00.0') AND (A.ANAL_T1 <= '534.999.99.99.9') OR
+                                                                     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND (A.ACCNT_CODE <= '113.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '201.000.00.00.0') AND (A.ANAL_T1 <= '201.999.99.99.9')
+UNION ALL
+SELECT     'CF.03.11.14' AS ANL_CODE, 'NET CASH USED/GENERATED IN INVESTING ACTIVITIES' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND (A.ACCNT_CODE <= '113.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '531.000.00.00.0') AND (A.ANAL_T1 <= '534.999.99.99.9') OR
+                                                                     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND (A.ACCNT_CODE <= '113.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '201.000.00.00.0') AND (A.ANAL_T1 <= '201.999.99.99.9')
+
+                                               UNION ALL
+                                               SELECT     'CF.03.11.14' AS ANL_CODE, 'Purchase of intangible assets' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '101.008.00.00.1') AND (A.ACCNT_CODE <= '103.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '531.000.00.00.0') AND (A.ANAL_T1 <= '534.999.99.99.9') OR
+                                                                     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '101.008.00.00.1') AND (A.ACCNT_CODE <= '103.999.99.99.9') 
+                                                                     AND (A.D_C = 'D') AND (A.ANAL_T1 >= '201.000.00.00.0') AND (A.ANAL_T1 <= '201.999.99.99.9')
+                                               UNION ALL
+                                               SELECT     'CF.03.11.15' AS ANL_CODE, 'Financial income received' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'PL.11.30.00') AND (A.D_C = 'C') AND 
+                                                                     (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                               UNION ALL
+                                               SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.01')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.01')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.08')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.08')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS A
+                                               UNION ALL
+                                               SELECT     'CF.05.11.11' AS ANL_CODE, 'Net İncrease/decrease in cash and cash equivalents' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.01.11.01' AS ANL_CODE, 'Profit before tax/Loss before tax' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE LIKE 'PL.11.%')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.01' AS ANL_CODE, 'Depreciation' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.12.01')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.02' AS ANL_CODE, 'Foreign exchange gain' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.02.1' AS ANL_CODE, 'Foreign exchange loss' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.50.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.02.2' AS ANL_CODE, 'Gain on disposal' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.14.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.02.2' AS ANL_CODE, 'Loss on disposal' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.15.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.07' AS ANL_CODE, 'Finance costs' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.20.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.07.1' AS ANL_CODE, 'Financial income' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.30.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.11.07.2' AS ANL_CODE, 'Profit tax' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.12.00.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.01' AS ANL_CODE, 'Trade receivables' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.02' AS ANL_CODE, 'Prepayments and deferred expenses' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.03')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03' AS ANL_CODE, 'Inventories' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.04' AS ANL_CODE, 'Vat deposit' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.05' AS ANL_CODE, 'Advances paid and other assets' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                     FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_4
+                                                                                                                     WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                                                     GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                     HAVING      (- SUM(AMOUNT) > 0)) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     - SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM         (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                    FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_3
+                                                                                                                    WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                                                    GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                    HAVING      (- SUM(AMOUNT) > 0)) AS A) AS ADVANCE
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.07' AS ANL_CODE, 'Prepaid taxes' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM          (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                     FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                             FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_2
+                                                                                                                                             WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                    (PERIOD <= @PERIOD2)
+                                                                                                                                             GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                             HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM         (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                    FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                            FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_1
+                                                                                                                                            WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                   (PERIOD < @PER1)
+                                                                                                                                            GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                            HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.06' AS ANL_CODE, 'Receivables from shareholders' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'XX.XX.XX.XX')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.08' AS ANL_CODE, 'Trade payables' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+UNION ALL
+
+
+                                                                                             SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+
+UNION ALL
+
+
+
+                                                                      SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.08')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.12' AS ANL_CODE, 'Short-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.08')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.21.01' AS ANL_CODE, 'Financial costs paid' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'PL.11.20.00') AND 
+                                                                                            (A.D_C = 'D') AND (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.21.12' AS ANL_CODE, 'Taxes paid' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.09')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.21.12' AS ANL_CODE, 'Taxes paid' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.12.00.00')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                      SELECT     'CF.03.11.11' AS ANL_CODE, 'Proceeds of disposal of Property,Plant and equipments' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (A.ACCNT_CODE = '611.047.01.01.1') AND 
+                                                                                            (A.D_C = 'C') AND (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.03.11.12' AS ANL_CODE, 'Proceeds of disposal of Intangible assets' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE = '611.047.02.01.1') AND (A.D_C = 'C') AND 
+                                                                                            (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.03.11.13' AS ANL_CODE, 'Purchase of property, plant and equipment' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND 
+                                                                                            (A.ACCNT_CODE <= '113.999.99.99.9') AND (A.D_C = 'D') AND (A.ANAL_T1 >= '531.000.00.00.0') AND 
+                                                                                            (A.ANAL_T1 <= '534.999.99.99.9') OR
+                                                                                            (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '111.008.00.00.1') AND 
+                                                                                            (A.ACCNT_CODE <= '113.999.99.99.9') AND (A.D_C = 'D') AND (A.ANAL_T1 >= '201.000.00.00.0') AND (A.ANAL_T1 <= '201.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.03.11.14' AS ANL_CODE, 'Purchase of intangible assets' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '101.008.00.00.1') AND 
+                                                                                            (A.ACCNT_CODE <= '103.999.99.99.9') AND (A.D_C = 'D') AND (A.ANAL_T1 >= '531.000.00.00.0') AND 
+                                                                                            (A.ANAL_T1 <= '534.999.99.99.9') OR
+                                                                                            (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (A.ACCNT_CODE >= '101.008.00.00.1') AND 
+                                                                                            (A.ACCNT_CODE <= '103.999.99.99.9') AND (A.D_C = 'D') AND (A.ANAL_T1 >= '201.000.00.00.0') AND (A.ANAL_T1 <= '201.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.03.11.15' AS ANL_CODE, 'Financial income received' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'PL.11.30.00') AND 
+                                                                                            (A.D_C = 'C') AND (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.04.11.13' AS ANL_CODE, 'Long-term borrowings' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.07')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.04.11.15' AS ANL_CODE, 'Short-term borrowings' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.07')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.08')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.04.11.16' AS ANL_CODE, 'Short-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.08')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A) AS X1
+                                               WHERE     (AMOUNT <> 0)
+                                               GROUP BY LEFT(ANL_CODE, 3) + '00.00.00'
+                                               UNION ALL
+                                               SELECT     'CF.05.11.12' AS ANL_CODE, 'Cash and cash equivalents at the beginning of the year' AS NAME, - SUM(AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_A_SALFLDG AS A
+                                               WHERE     (ACCNT_CODE >= '221.050.01.01.1') AND (ACCNT_CODE <= '224.999.99.99.9') AND (PERIOD < @PER1)
+                                               UNION ALL
+                                               SELECT     'CF.05.11.13' AS ANL_CODE, 'Cash and cash equivalents at the end of the year' AS NAME, - SUM(AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_A_SALFLDG AS A
+                                               WHERE     (ACCNT_CODE >= '221.050.01.01.1') AND (ACCNT_CODE <= '224.999.99.99.9') AND (PERIOD <= @PERIOD2)) AS X0
+                       WHERE      (AMOUNT <> 0)
+                       GROUP BY ANL_CODE, NAME) AS X0
+UNION ALL
+
+
+--------- TOTAL INCREASE + ADJUSTMENTS +
+
+
+     SELECT 'CF.02.00.00' AS 'L1', 'CF.02.10.00' AS 'L2', 'CF.02.12.00' AS 'L3',   'CF.02.13.01' AS ANL_CODE, '' AS NAME, SUM(IT.AMOUNT) AS AMOUNT
+                   FROM      (SELECT     'CF.02.12.01' AS ANL_CODE, 'Trade receivables' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME 
+	UNION ALL			   
+				   
+				   
+				   
+				   
+				   SELECT     'CF.02.12.03' AS ANL_CODE, 'Inventories' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.04' AS ANL_CODE, 'Vat deposit' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.05' AS ANL_CODE, 'Advances paid and other assets' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                     FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_4
+                                                                                                                     WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                                                     GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                     HAVING      (- SUM(AMOUNT) > 0)) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     - SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM         (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                    FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_3
+                                                                                                                    WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                                                    GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                    HAVING      (- SUM(AMOUNT) > 0)) AS A) AS ADVANCE
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.07' AS ANL_CODE, 'Prepaid taxes' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM          (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                     FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                             FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_2
+                                                                                                                                             WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                    (PERIOD <= @PERIOD2)
+                                                                                                                                             GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                             HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM         (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                    FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                            FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_1
+                                                                                                                                            WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                   (PERIOD < @PER1)
+                                                                                                                                            GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                            HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.06' AS ANL_CODE, 'Receivables from shareholders' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'XX.XX.XX.XX')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.08' AS ANL_CODE, 'Trade payables' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+UNION ALL
+
+
+                                                                                             SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A) AS IT  
+
+UNION ALL
+-----ADUJMENT + INCREASE  +
+
+     SELECT 'CF.02.00.00' AS 'L1', 'CF.02.10.00' AS 'L2', 'CF.02.12.00' AS 'L3',   'CF.02.14.01' AS ANL_CODE, 'TOTAL' AS NAME, SUM(IT2.AMOUNT) AS AMOUNT
+                   FROM      
+				   (SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                      dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                      dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE      (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE LIKE 'PL.11.%')
+
+											   UNION ALL
+											   SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.12.01')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT 'CF.02.11.08' AS ANL_CODE,     ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                              
+                                              
+                                               UNION ALL
+                                               SELECT  'CF.02.11.08' AS ANL_CODE,   ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.20.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+											   UNION ALL
+ SELECT     'CF.02.12.01' AS ANL_CODE, 'Trade receivables' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME 
+UNION ALL
+
+				   SELECT     'CF.02.12.03' AS ANL_CODE, 'Inventories' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.04' AS ANL_CODE, 'Vat deposit' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.05' AS ANL_CODE, 'Advances paid and other assets' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                     FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_4
+                                                                                                                     WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                                                     GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                     HAVING      (- SUM(AMOUNT) > 0)) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     - SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM         (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                    FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_3
+                                                                                                                    WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                                                    GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                    HAVING      (- SUM(AMOUNT) > 0)) AS A) AS ADVANCE
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.07' AS ANL_CODE, 'Prepaid taxes' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM          (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                     FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                             FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_2
+                                                                                                                                             WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                    (PERIOD <= @PERIOD2)
+                                                                                                                                             GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                             HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM         (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                    FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                            FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_1
+                                                                                                                                            WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                   (PERIOD < @PER1)
+                                                                                                                                            GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                            HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.06' AS ANL_CODE, 'Receivables from shareholders' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'XX.XX.XX.XX')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.08' AS ANL_CODE, 'Trade payables' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+UNION ALL
+
+
+                                                                                             SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A) AS IT2 
+UNION ALL
+
+---- ADUJSMENTS + INCREASE+ FINANCIAL +
+
+     SELECT 'CF.02.00.00' AS 'L1', 'CF.02.20.00' AS 'L2', 'CF.02.21.00' AS 'L3',   'CF.02.21.02' AS ANL_CODE, 'NET CASH FROM OPERATIONG ACTIVITIES' AS NAME, SUM(IT3.AMOUNT) AS AMOUNT
+                   FROM      
+				   (SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                      dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                      dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE      (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE LIKE 'PL.11.%')
+
+											   UNION ALL
+											   SELECT 'CF.02.11.08' AS ANL_CODE, ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.12.01')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                               UNION ALL
+                                               SELECT 'CF.02.11.08' AS ANL_CODE,     ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.40.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+                                              
+                                              
+                                               UNION ALL
+                                               SELECT  'CF.02.11.08' AS ANL_CODE,   ' ' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'PL.11.20.00')
+                                               GROUP BY B.ANL_CODE, C.NAME
+											   UNION ALL
+ SELECT     'CF.02.12.01' AS ANL_CODE, 'Trade receivables' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME 
+UNION ALL
+
+
+
+				   SELECT     'CF.02.12.03' AS ANL_CODE, 'Inventories' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.04')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.04' AS ANL_CODE, 'Vat deposit' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.05' AS ANL_CODE, 'Advances paid and other assets' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                     FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_4
+                                                                                                                     WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD < @PER1)
+                                                                                                                     GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                     HAVING      (- SUM(AMOUNT) > 0)) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     - SUM(AMOUNT) AS AMOUNT
+                                                                                             FROM         (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                    FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_3
+                                                                                                                    WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND (PERIOD <= @PERIOD2)
+                                                                                                                    GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                    HAVING      (- SUM(AMOUNT) > 0)) AS A) AS ADVANCE
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.07' AS ANL_CODE, 'Prepaid taxes' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.06')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM          (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                     FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                             FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_2
+                                                                                                                                             WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                    (PERIOD <= @PERIOD2)
+                                                                                                                                             GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                             HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, - ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                                             FROM         (SELECT     - SUM(AMOUNT) AS AMOUNT, 'BL.02.01.01' AS ANL_CODE
+                                                                                                                    FROM          (SELECT     ANAL_T2, - SUM(AMOUNT) AS AMOUNT, ACCNT_CODE
+                                                                                                                                            FROM          dbo.AZY_A_SALFLDG AS AZY_A_SALFLDG_1
+                                                                                                                                            WHERE      (ACCNT_CODE >= '531.060.01.01.1') AND (ACCNT_CODE <= '532.999.99.99.9') AND 
+                                                                                                                                                                   (PERIOD < @PER1)
+                                                                                                                                            GROUP BY ANAL_T2, ACCNT_CODE
+                                                                                                                                            HAVING      (- SUM(AMOUNT) > 0)) AS A) AS A
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.03.01' AS ANL_CODE, 'Trade payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.01')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.06' AS ANL_CODE, 'Receivables from shareholders' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'XX.XX.XX.XX')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.08' AS ANL_CODE, 'Trade payables' AS NAME, - SUM(A.AMOUNT) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.01.01.07')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(AMOUNT)) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.09' AS ANL_CODE, 'Payable to shareholders' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.03')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+                                                                                             UNION ALL
+                                                                                             SELECT     'CF.02.12.10' AS ANL_CODE, 'Other current liabilities' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.04')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A
+                                                                      UNION ALL
+                                                                      SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, SUM(AMOUNT) AS AMOUNT
+                                                                      FROM         (SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                    dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+                                                                                             GROUP BY B.ANL_CODE, C.NAME
+UNION ALL
+
+
+                                                                                             SELECT     'CF.02.12.11' AS ANL_CODE, 'Advances received' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                                             FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                                   dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                                             WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (C.ANL_CODE = 'BL.02.01.05')
+ UNION ALL
+ SELECT     'CF.02.21.01' AS ANL_CODE, 'Financial costs paid' AS NAME, SUM(A.AMOUNT) AS AMOUNT
+                                               FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                     dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                     dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                               WHERE     (A.PERIOD >= @PER1) AND (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'PL.11.20.00') AND (A.D_C = 'D') AND 
+                                                                     (A.ANAL_T1 >= '221.050.01.01.1') AND (A.ANAL_T1 <= '223.999.99.99.9')     
+                                                                                             GROUP BY B.ANL_CODE, C.NAME) AS A) AS IT3
+UNION ALL
+SELECT 'CF.04.00.00' AS 'L1', 'CF.04.10.00' AS 'L2', 'CF.04.11.00' AS 'L3', 'CF.04.11.15' AS ANL_CODE, 'NET CASH USED/GENERATED IN FINANCING ACTIVITIES' AS NAME, SUM(IT4.AMOUNT) AS AMOUNT
+                                               FROM         (SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, - ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM          dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                             dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                             dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE      (A.PERIOD < @PER1) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME
+                                                                      UNION ALL
+                                                                      SELECT     'CF.04.11.14' AS ANL_CODE, 'Long-term payables' AS NAME, ABS(SUM(A.AMOUNT)) AS AMOUNT
+                                                                      FROM         dbo.AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                            dbo.AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                            dbo.AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                      WHERE     (A.PERIOD <= @PERIOD2) AND (C.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')
+                                                                      GROUP BY B.ANL_CODE, C.NAME) AS IT4 ORDER BY ANL_CODE
+
+
+
+
+
+---- 
+
+
+ END
