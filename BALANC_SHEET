@@ -1,0 +1,188 @@
+USE [SunSystemsDB]
+GO
+/****** Object:  StoredProcedure [dbo].[BALANC_SHEET_2]    Script Date: 25/04/2023 13:27:20 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[BALANC_SHEET_2]  @PERIOD CHAR(7)
+AS
+BEGIN 
+
+SELECT        '0.2' AS TOT, '02' AS BS, 'Trade Payables' AS AD, - SUM(CREDIT) AS AMOUNT
+FROM            (SELECT        '0.2' AS TOT, '02' AS BS, 'TradeYH Payables' AS AD, (CASE WHEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) > - SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END) 
+                                                    THEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) - (- SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END)) ELSE 0 END) AS CREDIT
+                          FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                    AZY_SUPP AS S ON A.ANAL_T2 = S.SUPP_CODE
+                          WHERE        (A.ACCNT_CODE BETWEEN '531.060.01.01.1' AND '532.076.05.01.1') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)
+                          GROUP BY A.ANAL_T2, S.NAME
+                          UNION ALL
+                          SELECT        '0.2' AS TOT, '02' AS BS, 'Trade Payables' AS AD, SUM(AMOUNT) AS AMOUNT
+                          FROM            AZY_A_SALFLDG AS A
+                          WHERE        (ACCNT_CODE = '241.019.01.01.1') AND (PERIOD BETWEEN '2007001' AND @PERIOD)) AS K
+UNION ALL
+SELECT        '0.2' AS TOT, '02' AS BS, 'Payable to Shareholders' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.03')) AS SHR
+UNION ALL
+SELECT        '0.2' AS TOT, '02' AS BS, 'Other Current Liabilities' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.04')) AS OT
+UNION ALL
+SELECT        '0.2' AS TOT, '02' AS BS, 'Advances Received' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.05')) AS ADV
+UNION ALL
+SELECT        '0.2' AS TOT, '02' AS BS, 'Short-Term Borrowings' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.01.07')) AS SHR_4
+UNION ALL
+SELECT        '0.1' AS TOT, '02' AS BS, 'CURRENT LIABILITIES' AS AD, SUM(AMOUNT) AS AMOUNT
+FROM            (SELECT        '0.1' AS TOT, '02' AS BS, 'CURRENT LIABILITIES' AS AD, - SUM(CREDIT) AS AMOUNT, 0 AS AMOUNT1
+                          FROM            (SELECT        '0.1' AS TOT, '02' AS BS, 'CURRENT LIABILITIES' AS AD, (CASE WHEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) > - SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END) 
+                                                                              THEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) - (- SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END)) ELSE 0 END) AS CREDIT
+                                                    FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                              AZY_SUPP AS S ON A.ANAL_T2 = S.SUPP_CODE
+                                                    WHERE        (A.ACCNT_CODE BETWEEN '531.060.01.01.1' AND '532.076.05.01.1') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)
+                                                    GROUP BY A.ANAL_T2, S.NAME
+                                                    UNION ALL
+                                                    SELECT        '0.1' AS TOT, '02' AS BS, 'CURRENT LIABILITIES' AS AD, SUM(AMOUNT) AS AMOUNT
+                                                    FROM            AZY_A_SALFLDG AS A
+                                                    WHERE        (ACCNT_CODE = '241.019.01.01.1') AND (PERIOD BETWEEN '2007001' AND @PERIOD)) AS K_4
+                          UNION ALL
+                          SELECT        '0.1' AS TOT, '02' AS BS, 'CURRENT LIABILITIES' AS AD, AMOUNT, 0 AS AMOUNT1
+                          FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                                                    FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                              AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                              AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                    WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE IN ('BL.02.01.03', 'BL.02.01.04', 'BL.02.01.05', 'BL.02.01.07'))) AS SHR_3) AS DT
+UNION ALL
+SELECT        '0.2' AS TOT, '03' AS BS, 'Long-Terms Payables' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.02.02.02')) AS LONG
+UNION ALL
+SELECT        '0.1' AS TOT, '03' AS BS, 'TOTAL LIABILITIES' AS AD, SUM(AMOUNT) AS AMOUNT
+FROM            (SELECT        '0.1' AS TOT, '03' AS BS, 'CURRENT LIABILITIES' AS AD, SUM(AMOUNT) AS AMOUNT
+                          FROM            (SELECT        '0.1' AS TOT, '03' AS BS, 'CURRENT LIABILITIES' AS AD, - SUM(CREDIT) AS AMOUNT, 0 AS AMOUNT1
+                                                    FROM            (SELECT        '0.1' AS TOT, '03' AS BS, 'CURRENT LIABILITIES' AS AD, (CASE WHEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) 
+                                                                                                        > - SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END) THEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) 
+                                                                                                        - (- SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END)) ELSE 0 END) AS CREDIT
+                                                                              FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                                                        AZY_SUPP AS S ON A.ANAL_T2 = S.SUPP_CODE
+                                                                              WHERE        (A.ACCNT_CODE BETWEEN '531.060.01.01.1' AND '532.076.05.01.1') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)
+                                                                              GROUP BY A.ANAL_T2, S.NAME
+                                                                              UNION ALL
+                                                                              SELECT        '0.1' AS TOT, '03' AS BS, 'CURRENT LIABILITIES' AS AD, SUM(AMOUNT) AS AMOUNT
+                                                                              FROM            AZY_A_SALFLDG AS A
+                                                                              WHERE        (ACCNT_CODE = '241.019.01.01.1') AND (PERIOD BETWEEN '2007001' AND @PERIOD)) AS K_3
+                                                    UNION ALL
+                                                    SELECT        '0.1' AS TOT, '03' AS BS, 'CURRENT LIABILITIES' AS AD, AMOUNT, 0 AS AMOUNT1
+                                                    FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                                                                              FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                        AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                        AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                              WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE IN ('BL.02.02.02', 'BL.02.01.03', 'BL.02.01.04', 'BL.02.01.05', 'BL.02.01.07'))) AS SHR_2) 
+                                                    AS DT_1) AS TP
+UNION ALL
+SELECT        '0.2' AS TOT, '04' AS BS, 'Charter Capital' AS AD, AMOUNT
+FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT
+                          FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                    AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                    AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                          WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.01')) AS CH
+UNION ALL
+SELECT        '0.2' AS TOT, '04' AS BS, 'Retained Earnings\Accumulated Deficit' AS AD, SUM(AMOUNT - AMOUNT1) AS Expr1
+FROM            (SELECT        '0.2' AS TOT, '04' AS BS, 'Retained Earnings\Accumulated Deficit' AS AD, AMOUNT, AMOUNT1
+                          FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT, 0 AS AMOUNT1
+                                                    FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                              AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                              AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                    WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.02')) AS RT
+                          UNION ALL
+                          SELECT        '0.2' AS TOT, '04' AS BS, 'Retained Earnings\Accumulated Deficit' AS AD, AMOUNT, AMOUNT1
+                          FROM            (SELECT        SUM(A.AMOUNT) AS AMOUNT1, 0 AS AMOUNT
+                                                    FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                              AZY_ACNT AS AC ON A.ACCNT_CODE = AC.ACNT_CODE
+                                                    WHERE        (AC.ACNT_TYPE = '3') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)) AS BT) AS K_2
+UNION ALL
+SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL EQUTTY' AS AD, SUM(AMOUNT - AMOUNT1) AS Expr1
+FROM            (SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL EQUTTY' AS AD, AMOUNT, AMOUNT1
+                          FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT, 0 AS AMOUNT1
+                                                    FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                              AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                              AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                    WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.02')) AS RT_2
+                          UNION ALL
+                          SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL EQUTTY' AS AD, AMOUNT, AMOUNT1
+                          FROM            (SELECT        SUM(A.AMOUNT) AS AMOUNT1, 0 AS AMOUNT
+                                                    FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                              AZY_ACNT AS AC ON A.ACCNT_CODE = AC.ACNT_CODE
+                                                    WHERE        (AC.ACNT_TYPE = '3') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)) AS BT_2
+                          UNION ALL
+                          SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL EQUTTY' AS AD, AMOUNT, AMOUNT1
+                          FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT, 0 AS AMOUNT1
+                                                    FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                              AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                              AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                    WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.01')) AS TP_2) AS C_2
+UNION ALL
+SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, SUM(AMOUNT3) AS Expr1
+FROM            (SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, SUM(AMOUNT - AMOUNT1) AS AMOUNT3, 0 AS AMOUNT, 0 AS AMOUNT1
+                          FROM            (SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, AMOUNT, AMOUNT1
+                                                    FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT, 0 AS AMOUNT1
+                                                                              FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                        AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                        AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                              WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.02')) AS RT_1
+                                                    UNION ALL
+                                                    SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, AMOUNT, AMOUNT1
+                                                    FROM            (SELECT        SUM(A.AMOUNT) AS AMOUNT1, 0 AS AMOUNT
+                                                                              FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                                                        AZY_ACNT AS AC ON A.ACCNT_CODE = AC.ACNT_CODE
+                                                                              WHERE        (AC.ACNT_TYPE = '3') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)) AS BT_1
+                                                    UNION ALL
+                                                    SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, AMOUNT, AMOUNT1
+                                                    FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT, 0 AS AMOUNT1
+                                                                              FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                        AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                        AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                              WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE = 'BL.03.01.01')) AS TP_1) AS C_1
+                          UNION ALL
+                          SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, SUM(AMOUNT3) AS AMOUNT3, 0 AS AMOUNT, 0 AS AMOUNT1
+                          FROM            (SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, - SUM(AMOUNT3) AS AMOUNT3, 0 AS AMOUNT1, 0 AS AMOUNT
+                                                    FROM            (SELECT        '0.1' AS TOT, '04' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, (CASE WHEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) 
+                                                                                                        > - SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END) THEN SUM(CASE WHEN A.D_C = 'C' THEN A.AMOUNT ELSE 0 END) 
+                                                                                                        - (- SUM(CASE WHEN A.D_C = 'D' THEN A.AMOUNT ELSE 0 END)) ELSE 0 END) AS AMOUNT3
+                                                                              FROM            AZY_A_SALFLDG AS A INNER JOIN
+                                                                                                        AZY_SUPP AS S ON A.ANAL_T2 = S.SUPP_CODE
+                                                                              WHERE        (A.ACCNT_CODE BETWEEN '531.060.01.01.1' AND '532.076.05.01.1') AND (A.PERIOD BETWEEN '2007001' AND @PERIOD)
+                                                                              GROUP BY A.ANAL_T2, S.NAME
+                                                                              UNION ALL
+                                                                              SELECT        '0.1' AS TOT, '02' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, SUM(AMOUNT) AS AMOUNT3
+                                                                              FROM            AZY_A_SALFLDG AS A
+                                                                              WHERE        (ACCNT_CODE = '241.019.01.01.1') AND (PERIOD BETWEEN '2007001' AND @PERIOD)) AS K_1
+                                                    UNION ALL
+                                                    SELECT        '0.1' AS TOT, '02' AS BS, 'TOTAL LIABILIES AND EQUTTY' AS AD, AMOUNT3, 0 AS AMOUNT1, 0 AS AMOUNT
+                                                    FROM            (SELECT        - SUM(A.AMOUNT) AS AMOUNT3
+                                                                              FROM            AZY_ANL_CODE AS C RIGHT OUTER JOIN
+                                                                                                        AZY_ACNT_ANL_CAT AS B ON C.ANL_CODE = B.ANL_CODE AND C.ANL_CAT_ID = B.ANL_CAT_ID RIGHT OUTER JOIN
+                                                                                                        AZY_A_SALFLDG AS A ON B.ACNT_CODE = A.ACCNT_CODE
+                                                                              WHERE        (A.PERIOD BETWEEN '2007001' AND @PERIOD) AND (B.ANL_CAT_ID = '09') AND (B.ANL_CODE IN ('BL.02.01.03', 'BL.02.01.04', 'BL.02.01.05', 'BL.02.01.07', 'BL.02.02.02'))) AS SHR_1) AS M) 
+                         AS X
+
+END
